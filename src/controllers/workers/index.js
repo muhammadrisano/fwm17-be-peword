@@ -10,9 +10,9 @@ const { response } = require("../../helpers/common");
 const { registerSchema, updateSchema } = require("./request_model");
 const register = async (req, res, next) => {
   try {
-    const {error, value} = registerSchema(req.body)
-    if(error){
-      return next(new createError.BadRequest(error.details[0].message))
+    const { error, value } = registerSchema(req.body);
+    if (error) {
+      return next(new createError.BadRequest(error.details[0].message));
     }
     const { email, password, name, phone } = value;
     const { rowCount } = await users.findByEmail(email, {
@@ -38,21 +38,29 @@ const register = async (req, res, next) => {
     };
     await users.create(user);
     await workers.register(worker);
-    fetch("https://api.onesignal.com/notifications", {
+
+    const notifData = {
+      app_id: process.env.ONESIGNAL_ID,
+      name: "info register user",
+      included_segments: ["Total Subscriptions"],
+      contents: {
+        en: `${worker.name} telah bergabung`,
+      },
+      data:{
+        worker
+      }
+    };
+    const resNotif = await fetch("https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
         accept: "application/json",
-        Authorization: "Basic YzQ0NWRiNWMtMDkwMy00NzBlLWE3N2YtNWIzNmM4NjAwMzll",
         "content-type": "application/json",
+        Authorization : `Bearer ${process.env.ONESIGNAL_API_KEY}`
       },
-      body: JSON.stringify({
-        app_id: "aa31724e-0b8d-48c7-b3eb-1337f6070971",
-        name: "Informasi worker register",
-        included_segments: ["Total Subscriptions"],
-        contents: { en: `${worker.name} bergabung di aplikasi peword` },
-        headings: { en: "Worker Register" },
-      }),
-    });
+      body: JSON.stringify(notifData)
+    })
+    const result = await resNotif.json()
+    console.log(result);
     response(res, null, 201, "user berhasil resgiter");
   } catch (error) {
     console.log(error);
@@ -62,9 +70,9 @@ const register = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const {error, value} = updateSchema(req.body)
-    if(error){
-      return next(new createError.BadRequest(error.details[0].message))
+    const { error, value } = updateSchema(req.body);
+    if (error) {
+      return next(new createError.BadRequest(error.details[0].message));
     }
     const email = req.decoded.email;
     const {
@@ -157,7 +165,7 @@ const selectAll = async (req, res, next) => {
   // }, 5000)
 };
 
-const updateFoto = async(req, res, next) =>{
+const updateFoto = async (req, res, next) => {
   try {
     const email = req.decoded.email;
     const {
@@ -165,9 +173,26 @@ const updateFoto = async(req, res, next) =>{
     } = await users.findByEmail(email);
 
     const result = await cloudinary.uploader.upload(req.file.path);
-    const urlPhoto = result.secure_url
+    const urlPhoto = result.secure_url;
     await workers.updatePhoto(urlPhoto, user.user_id);
-    response(res, {photo: urlPhoto}, 200, "update photo profile workers success ");
+    response(
+      res,
+      { photo: urlPhoto },
+      200,
+      "update photo profile workers success "
+    );
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+const deleteWorker = async(req, res, next)=>{
+  try {
+    const id = req.params.id
+    const {rows} = await users.deleteOne(id)
+    response(res, rows, 200, "delete workers success ");
+
+
   } catch (error) {
     console.log(error);
     next(error);
@@ -179,5 +204,6 @@ module.exports = {
   selectAll,
   profile,
   detail,
-  updateFoto
+  updateFoto,
+  deleteWorker
 };

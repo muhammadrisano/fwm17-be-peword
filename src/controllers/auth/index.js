@@ -5,6 +5,7 @@ const authHelper = require("../../helpers/auth");
 const bcrypt = require("bcryptjs");
 const commonHelper = require("../../helpers/common");
 const {loginSchema} = require('./request_model');
+const jwt = require("jsonwebtoken");
 
 const login = async (req, res, next) => {
   try {
@@ -72,9 +73,32 @@ const checkRole = (req,res, next)=>{
     next(error);
   }
 }
+const refreshToken = (req, res, next)=>{
+  try {
+    const refreshToken = req.body.refreshToken
+    console.log();
+    const decoded = jwt.verify(refreshToken, process.env.SECRET_KEY_JWT)
+
+  const payload = {
+    email: decoded.email,
+    role: decoded.role
+  }
+
+  const data = {
+    token: authHelper.generateToken(payload),
+    refreshToken:authHelper.gerateRefreshToken(payload)
+  }
+  commonHelper.response(res, data, 200, 'Refresh Token Success')
+  } catch (error) {
+    console.log(error);
+    next(error)
+  }
+  
+}
 
 module.exports = {
   login,
   logout,
-  checkRole
+  checkRole,
+  refreshToken
 };

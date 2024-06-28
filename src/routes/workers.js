@@ -11,5 +11,6 @@ router.get('/profile',protect, workerController.profile)
 router.put('/profile',protect, workerController.update)
 router.put('/profile/photo',protect, upload.single('photo'), workerController.updateFoto)
 router.get('/:id', workerController.detail)
+router.delete('/:id', protect, workerController.deleteWorker )
 
 module.exports = router

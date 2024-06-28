@@ -32,8 +32,15 @@ const updateEmail = ({email}, id) =>{
     [email, id]
   );
 }
+const deleteOne = (id)=>{
+  return pool.query(
+    "DELETE FROM users WHERE id = $1 RETURNING * ",
+    [id]
+  );
+}
 module.exports = {
   create,
   findByEmail,
-  updateEmail
+  updateEmail,
+  deleteOne
 }
