@@ -43,6 +43,13 @@ app.use(morgan("dev"));
 
 app.use("/v1", routes);
 
+
+app.get('/', (req, res, next)=>{
+  res.json({
+    message: 'API for peword is working'
+  })
+})
+
 app.all("*", (req, res, next) => {
   next(new createError.NotFound());
 });
